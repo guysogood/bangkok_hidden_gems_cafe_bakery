@@ -1,0 +1,45 @@
+# --- Secrets ---
+.env
+!.env.example
+*_key.json
+
+# --- Local config ---
+config/
+
+# --- Virtual environment ---
+.venv/
+venv/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- PySpark / Spark local runtime artifacts ---
+spark-warehouse/
+metastore_db/
+derby.log
+*.crc
+_SUCCESS
+
+# --- The GCS connector jar ---
+gcs-connector-hadoop3-latest.jar
+gcs-connector-*.jar
+
+# --- Local data files ---
+*.parquet
+bronze_places_raw.json
+bronze_*.json
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- VS Code (keep shared settings, ignore personal/local ones) ---
+.vscode/settings.local.json
+.vscode/*.local.json
+
+# --- macOS ---
+.DS_Store

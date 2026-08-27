@@ -1,0 +1,15 @@
+# Google Cloud clients
+google-cloud-storage
+google-cloud-bigquery
+google-cloud-secret-manager
+googlemaps
+
+# Processing
+pyspark==3.5.3
+pandas
+
+# Config & secrets
+python-dotenv
+
+# Testing & quality
+pytest
