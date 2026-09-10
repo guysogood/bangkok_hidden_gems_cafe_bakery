@@ -47,9 +47,8 @@ A positive score means the place rates above what's typical for its district.
 
 - **Bangkok only.** The ingestion grid extends slightly past Bangkok's border into neighboring provinces; silver keeps only records where province resolves to `"Bangkok"` or `"Krung Thep Maha Nakhon"`.
 - **English-formatted addresses only.** Google returns some addresses in Thai script depending on the place's language metadata; records with Thai-script district/province are dropped rather than parsed inconsistently.
-- **No transit-distance feature.** Distance to BTS/MRT was considered and deliberately left out — it isn't part of what "hidden gem" means here.
 - **No NLP.** Scoring is built entirely from structured fields (rating, review count, price level) — no review text processing.
-- **Self-hosted Airflow, not Cloud Composer.** Composer's always-on cost isn't justified for a project this size; the DAG runs locally via `airflow standalone`, calling the same scripts as manual runs.
+- **Self-hosted Airflow.** Composer's always-on cost isn't justified for a project this size; the DAG runs locally via `airflow standalone`, calling the same scripts as manual runs.
 - **The DAG doesn't call the Places API.** Ingestion is a separate, manually-run script. The DAG orchestrates `bronze_to_silver → silver_to_gold → load_to_bigquery` against an existing bronze snapshot, to avoid incurring API costs on every scheduled run.
 - **Two service accounts.** One scoped to GCS (read/write), one scoped to BigQuery (read GCS, write BigQuery) — least-privilege rather than one account holding every permission.
 
@@ -92,27 +91,3 @@ python src/loaders/load_to_bigquery.py --project <gcp-project-id> --gold-path <g
 airflow standalone
 ```
 Point `dags_folder` in `airflow.cfg` at this repo's `dags/` folder, unpause `hidden_gems_pipeline` in the UI, and trigger it.
-
-## Repo structure
-
-```
-bangkok-hidden-gems/
-├── dags/
-│   └── hidden_gems_pipeline_dag.py
-├── src/
-│   ├── ingestion/
-│   │   └── places_api_client.py
-│   ├── transforms/
-│   │   ├── bronze_to_silver.py
-│   │   └── silver_to_gold.py
-│   └── loaders/
-│       ├── upload_to_gcs.py
-│       └── load_to_bigquery.py
-├── notebooks/
-│   └── exploration.ipynb
-├── docs/
-│   └── architecture.svg
-├── requirements.txt
-├── .env.example
-└── .gitignore
-```
