@@ -6,13 +6,9 @@ googlemaps
 
 # Processing
 pyspark==3.5.3
-pandas
 
 # Config & secrets
 python-dotenv
-
-# Testing & quality
-pytest
 
 # Airflow
 apache-airflow-providers-standard
