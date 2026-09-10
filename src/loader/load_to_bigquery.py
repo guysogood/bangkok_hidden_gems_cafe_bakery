@@ -8,9 +8,9 @@ Tables created/replaced:
 
 Usage:
     python load_to_bigquery.py \\
-        --project your-gcp-project-id \\
-        --dataset bangkok_hidden_gems \\
-        --gold-path gs://bkk_hidden_gems_cafe_bakery/gold
+        --project <gcp-project-id> \\
+        --dataset <dataset-name> \\
+        --gold-path gs://<bucket-name>/gold
 """
 
 import argparse

@@ -195,9 +195,18 @@ def main():
     final_df = merge_with_existing(clean_df, args.output, spark)
 
     final_df = final_df.select(
-        "place_id", "name", "place_types", "rating", "user_rating_count",
-        "price_level", "latitude", "longitude", "khet", "province",
-        "ingestion_date", "first_seen_date",
+        "place_id",
+        "name",
+        "place_types",
+        "rating",
+        "user_rating_count",
+        "price_level",
+        "latitude",
+        "longitude",
+        "khet",
+        "province",
+        "ingestion_date",
+        "first_seen_date",
     )
 
     logger.info("Writing %d rows to %s", final_df.count(), args.output)
