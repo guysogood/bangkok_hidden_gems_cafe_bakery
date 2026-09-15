@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
+SERVICE_ACCOUNT_KEY_PATH = os.getenv("GCS_SERVICE_ACCOUNT_KEY_PATH")
+
+
+def get_client() -> storage.Client:
+    if SERVICE_ACCOUNT_KEY_PATH:
+        return storage.Client.from_service_account_json(SERVICE_ACCOUNT_KEY_PATH)
+    # Falls back to Application Default Credentials if no key file is set
+    return storage.Client()
 
 
 def upload_file(local_path: Path, bucket_name: str, run_date: str) -> str:
@@ -35,7 +43,7 @@ def upload_file(local_path: Path, bucket_name: str, run_date: str) -> str:
     if not local_path.exists():
         raise FileNotFoundError(f"No such file: {local_path}")
 
-    client = storage.Client()  # uses Application Default Credentials
+    client = get_client()
 
     try:
         bucket = client.get_bucket(bucket_name)

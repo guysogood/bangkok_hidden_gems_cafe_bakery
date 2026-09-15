@@ -1,0 +1,79 @@
+# Local Airflow via Docker Compose - LocalExecutor + Postgres.
+# CeleryExecutor/Redis intentionally skipped: this runs on one machine,
+# there's nothing to distribute tasks across.
+#
+# Project code (dags/, src/) and secrets are volume-mounted, not baked
+# into the image - see Dockerfile for why.
+
+x-airflow-common: &airflow-common
+  build: .
+  env_file:
+    - .env
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    GCS_SERVICE_ACCOUNT_KEY_PATH: /opt/airflow/secrets/bkk_cafe_bakery_gcs_key.json
+    BIGQUERY_SERVICE_ACCOUNT_KEY_PATH: /opt/airflow/secrets/bkk_cafe_bakery_bq_key.json
+    GCS_CONNECTOR_JAR_PATH: /opt/airflow/jars/gcs-connector-hadoop3-latest.jar
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./src:/opt/airflow/project/src
+    - ./logs:/opt/airflow/logs
+    - ./secrets:/opt/airflow/secrets:ro
+    - ./gcs-connector-hadoop3-latest.jar:/opt/airflow/jars/gcs-connector-hadoop3-latest.jar:ro
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname admin \
+          --lastname admin \
+          --role Admin \
+          --email admin@example.com
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-db-volume:

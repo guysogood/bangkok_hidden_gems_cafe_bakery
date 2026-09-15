@@ -1,12 +1,14 @@
-# --- Secrets ---
+# --- Secrets: never commit these ---
 .env
+.env.*
 !.env.example
 *_key.json
+secrets/
 
-# --- Local config ---
-config/
+# --- Docker / Airflow runtime ---
+logs/
 
-# --- Virtual environment ---
+# --- Virtual environment (only used for local, non-Docker script runs) ---
 .venv/
 venv/
 
@@ -25,11 +27,11 @@ derby.log
 *.crc
 _SUCCESS
 
-# --- The GCS connector jar ---
+# --- The GCS connector jar (large, download separately, don't commit) ---
 gcs-connector-hadoop3-latest.jar
 gcs-connector-*.jar
 
-# --- Local data files ---
+# --- Local data files (bronze/silver/gold outputs if ever written locally) ---
 *.parquet
 bronze_places_raw.json
 bronze_*.json
@@ -37,7 +39,9 @@ bronze_*.json
 # --- Jupyter ---
 .ipynb_checkpoints/
 
-# --- VS Code (keep shared settings, ignore personal/local ones) ---
+# --- IDE / editor tooling ---
+.claude/
+CLAUDE.md
 .vscode/settings.local.json
 .vscode/*.local.json
 

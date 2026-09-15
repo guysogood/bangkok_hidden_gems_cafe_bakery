@@ -16,7 +16,7 @@ Google Places data alone doesn't tell you which cafes are "hidden gems" — a 4.
 | Processing | PySpark |
 | Data lake (bronze/silver/gold) | Google Cloud Storage |
 | Warehouse | BigQuery |
-| Orchestration | Apache Airflow (self-hosted) |
+| Orchestration | Apache Airflow |
 | Language | Python |
 
 ## Pipeline stages
@@ -49,7 +49,6 @@ A positive score means the place rates above what's typical for its district.
 - **English-formatted addresses only.** Google returns some addresses in Thai script depending on the place's language metadata; records with Thai-script district/province are dropped rather than parsed inconsistently.
 - **No transit-distance feature.** Distance to BTS/MRT was considered and deliberately left out — it isn't part of what "hidden gem" means here.
 - **No NLP.** Scoring is built entirely from structured fields (rating, review count, price level) — no review text processing.
-- **Self-hosted Airflow, not Cloud Composer.** Composer's always-on cost isn't justified for a project this size; the DAG runs locally via `airflow standalone`, calling the same scripts as manual runs.
 - **The DAG doesn't call the Places API.** Ingestion is a separate, manually-run script. The DAG orchestrates `bronze_to_silver → silver_to_gold → load_to_bigquery` against an existing bronze snapshot, to avoid incurring API costs on every scheduled run.
 - **Two service accounts.** One scoped to GCS (read/write), one scoped to BigQuery (read GCS, write BigQuery) — least-privilege rather than one account holding every permission.
 
@@ -62,7 +61,6 @@ pip install -r requirements.txt
 ```
 
 Copy `.env.example` to `.env` and fill in:
-- `PROJECT_ROOT`
 - `GOOGLE_PLACES_API_KEY`
 - `GCP_PROJECT_ID`
 - `GCS_BUCKET_NAME`
@@ -80,11 +78,11 @@ curl -f -o gcs-connector-hadoop3-latest.jar \
 
 **Run the pipeline manually:**
 ```
-python src/ingestion/places_api_client.py
-python src/loaders/upload_to_gcs.py bronze_places_raw.json
-python src/transforms/bronze_to_silver.py --input <bronze gs:// path> --output <silver gs:// path> --run-date YYYY-MM-DD
-python src/transforms/silver_to_gold.py --input <silver gs:// path> --output <gold gs:// path>
-python src/loaders/load_to_bigquery.py --project <gcp-project-id> --gold-path <gold gs:// path>
+python src/ingest/places_api_client.py
+python src/loader/upload_to_gcs.py data/raw/bronze_places_raw.json
+python src/transform/bronze_to_silver.py --input <bronze gs:// path> --output <silver gs:// path> --run-date YYYY-MM-DD
+python src/transform/silver_to_gold.py --input <silver gs:// path> --output <gold gs:// path>
+python src/loader/load_to_bigquery.py --project <gcp-project-id> --gold-path <gold gs:// path>
 ```
 
 **Run via Airflow:**
@@ -100,19 +98,29 @@ bangkok-hidden-gems/
 ├── dags/
 │   └── hidden_gems_pipeline_dag.py
 ├── src/
-│   ├── ingestion/
+│   ├── ingest/
 │   │   └── places_api_client.py
-│   ├── transforms/
+│   ├── transform/
 │   │   ├── bronze_to_silver.py
 │   │   └── silver_to_gold.py
-│   └── loaders/
-│       ├── upload_to_gcs.py
-│       └── load_to_bigquery.py
+│   ├── loader/
+│   │   ├── upload_to_gcs.py
+│   │   └── load_to_bigquery.py
+│   └── validate/
+│       ├── validate_silver.py
+│       └── validate_gold.py
+├── tests/
+│   ├── conftest.py
+│   ├── test_places_api_client.py
+│   ├── test_bronze_to_silver.py
+│   └── test_silver_to_gold.py
 ├── notebooks/
-│   └── exploration.ipynb
+│   ├── silver_explore.ipynb
+│   └── gold_explore.ipynb
 ├── docs/
 │   └── architecture.svg
 ├── requirements.txt
+├── pytest.ini
 ├── .env.example
 └── .gitignore
 ```

@@ -85,7 +85,8 @@ def load_bronze(spark: SparkSession, input_path: str) -> DataFrame:
 def flatten_and_clean(df: DataFrame, run_date: str) -> DataFrame:
     # Split formattedAddress into parts once, reused for khet/province
     address_parts = split(col("formattedAddress"), r",\s*")
-    khet_raw = trim(element_at(address_parts, -3))
+    # Strip the "Khet " administrative prefix so khet stores just the district name
+    khet_raw = trim(regexp_replace(trim(element_at(address_parts, -3)), r"(?i)^khet\s+", ""))
     province_with_postal = trim(element_at(address_parts, -2))
     # Strip trailing postal code digits (and any leftover whitespace) from province
     province_raw = trim(regexp_replace(province_with_postal, r"\d+", ""))
@@ -138,7 +139,7 @@ def flatten_and_clean(df: DataFrame, run_date: str) -> DataFrame:
     )
     after_thai_filter = flat.count()
     logger.info(
-        "Dropped %d rows with Thai-script khet/province and ",
+        "Dropped %d rows with Thai-script khet/province",
         after_null_filter - after_thai_filter,
     )
 
